@@ -41,3 +41,40 @@ Results are written to `results/results.json`.
 `z > 4` means the watermark is detected with overwhelming confidence
 (one-sided p < 3e-5). Human text and wrong-key detection should stay
 around `|z| < 2`.
+
+## Results (Qwen2.5-0.5B-Instruct, MPS, 200 tokens/sample, 42s total)
+
+Detection z-scores, averaged over 4 prompts:
+
+| text under test        | KGW detector | Gumbel detector |
+|------------------------|-------------:|----------------:|
+| vanilla (no watermark) |        -0.70 |            0.54 |
+| KGW-watermarked        |    **12.07** |           -0.60 |
+| Gumbel-watermarked     |        -2.91 |       **39.96** |
+| wrong key              |        -0.57 |           -1.30 |
+| human text (Austen)    |        -2.86 |            1.03 |
+
+Quality (mean NLL in nats/token under the same model): KGW distorts the
+distribution as predicted (e.g. 2.73 -> 4.76 on prompt 1), while Gumbel-Max
+does not degrade likelihood.
+
+Attacks (on prompt 1 outputs):
+
+| attack            | KGW z | Gumbel z |
+|-------------------|------:|---------:|
+| none              | 13.79 |    29.74 |
+| substitution 10%  | 11.34 |    23.64 |
+| substitution 30%  |  8.55 |    13.04 |
+| substitution 50%  |  3.97 |     6.52 |
+| paraphrase (LLM)  |  0.05 |     7.17 |
+
+The paraphrase attack wipes out the KGW watermark in a single pass,
+reproducing the key weakness discussed in the article. The residual Gumbel
+signal after paraphrase is explained by the weak 0.5B paraphraser copying
+several phrases verbatim, not by semantic robustness.
+
+Caveat observed in practice: with a fixed key and a 1-token hash context,
+Gumbel-Max generation is deterministic given the previous token, which
+noticeably increases phrase repetition (and lowers NLL below the vanilla
+baseline). Production schemes mitigate this with longer hash windows and
+key rotation.

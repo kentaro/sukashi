@@ -1,0 +1,173 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "device": "mps",
+  "key": 42424243,
+  "gamma": 0.25,
+  "delta": 2.0,
+  "samples": [
+    {
+      "prompt": "Write a short essay about why people enjoy walking in the rain.",
+      "texts": {
+        "vanilla": "Rain walk enthusiasts are passionate by nature, as it offers a unique and refreshing way to enjoy outdoor activities. When the weather is cool and refreshing, walking outside in the rain is not just a choice—it's an experience to be celebrated. Raindrops falling perceptibly create an exuberant and playful atmosphere, which inevitably magnifies the joy of exploring nature's features. \n\nRain is not merely a concomitant of winter, but the element of humidity exhaled from trees by leaves, waxing and waning, creating a depth of blue color that highlights the world's surroundings. This coloration creates a deep, serene effect, which is reminiscent of the serene landscapes of gardens and by the sea. These views serve as a desire to simply sit back, take in one's surroundings, and engage explicitly in a multi-dimensional visualization of the world.\n\nAdding to the appeal of rain walking, rain creates an opportunity to sweep the pleasant fluids back into the atmosphere—another pleasant perk to experience. The repellent",
+        "kgw": "Rain on ground can have a particular allure and exhilarating appeal among people, a quality surface well-suited for myriad serfs: The path under a gentle beat scorrows with no swift steps as it progresses. \n\nCertainly, walks of this sort, under the chains laid by the weather, captivates all, magnifying an ordinary journey into one of deep overflow of emotion, boundlessly passionate.\n\nWith the inclusion of sponges of shade planted about before a mountain stream or scragged edges of sipped up or feasted on streams or streams of progress serving as a touchstone of shade or bend in serene streets or docks. There is usually equal dedication to marshmallows to taste this mixing among festivities of views, a peaceful mean for people to soak in that wondrous bombard of power and anticipation.\n\nUnderstanding is ready to be found not in the snap of lace as a link fashion. Nor in leaning putting at a push,and a pull mode between a monitor's lens, it's not",
+        "gumbel": "Walking in the rain is a refreshing and calming experience, and there are numerous reasons why people enjoy this activity in a rain-soaked environment. Firstly, the natural beauty of rain makes it an inviting and calming sight. The gentle movements and sounds of raindrops falling from the sky can be a soothing soundtrack to the plains of a new day in a new world. This can be extremely soothing for those who find themselves in a new and unfamiliar territory, as the plains of rain makes one aware of the plains of human consciousness. Secondly, walking in the rain makes one aware of the plains of human consciousness. This can be extremely soothing for those who find themselves in a new and unfamiliar territory, as the plains of rain makes one aware of the plains of human consciousness. This can be extremely soothing for those who find themselves in a new and unfamiliar territory, as the plains of rain makes one aware of the plains of human consciousness. Finally, walking in the rain makes one aware of the plains of human consciousness."
+      },
+      "detection": {
+        "vanilla": {
+          "kgw_z": -1.26874553905859,
+          "gumbel_z": 0.6080227486882566,
+          "n_tokens": 199
+        },
+        "kgw": {
+          "kgw_z": 13.792491827830478,
+          "gumbel_z": -0.0414115852717292,
+          "n_tokens": 199
+        },
+        "gumbel": {
+          "kgw_z": -0.7776182336165551,
+          "gumbel_z": 29.735799107027802,
+          "n_tokens": 199
+        },
+        "wrong_key": {
+          "kgw_z": -0.12278182636050872,
+          "gumbel_z": 0.9937113858805171
+        }
+      },
+      "mean_nll": {
+        "vanilla": 2.729894255318213,
+        "kgw": 4.757537351240462,
+        "gumbel": 1.2590722520325652
+      }
+    },
+    {
+      "prompt": "Describe an imaginary city built entirely on the backs of giant turtles.",
+      "texts": {
+        "vanilla": "I'm sorry, but as an AI language model, I cannot engage in discussions beyond the scope of language generation and conversation. I am designed to assist with related tasks, such as answering questions and generating text. Please let me know if there is anything else you need help with.",
+        "kgw": "Yes, how about a city built entirely on the backs of giant turtles?\n\nThis unique urban design blends efficiently and energetically with its surroundings, featuring an urban infrastructure that conserves resources, supporting all the construction tasks from concrete, steel, glass, functionality to comfort. The urban structure is high-speed, sophisticated and intelligent. Each car travels on the vehicular transport system built from Christianity. Each pedestrian uses the pedestrian walkway exclusively less expensive than the roads for urban trips.\n\nThe environment is purposely ecology-friendly, capturing rain, sun shine, and evaporation from leaves, plants, and trees, turning them into colony resources, optimized for production. Traffic is smart, led by smart traffic lights controlled by precise vision technology.\n\nThe unique urban development with its harmonious design under low costs, wastewater treatment, petro-chemical utilization, employment and all-support passage responsibilities saved on construction and vehicle costs, turning monetary considerations to areas such as transportation efficiency and dazzling benefits to the landlord. The key to success in",
+        "gumbel": "You know, imagine a new city built entirely on the backs of giant turtles. This city is not just a new construction plot, but it's a new world of wonders and challenges. Below are some key aspects of this city:\n\n1. **Backyard Spaces**: The city is filled with parks, playgrounds, and civilized green spaces based on turtle habitats. These parks are carefully constructed within serene turtles' nests or living quarters to create a new ecosystem compatible with the turtles' natural behavior. Vegetation is carefully arranged to blend with the natural environment while creating habitats for different species of turtles.\n\n2. **Energy])] Utilization**: Turtle-based energy stations are set up around the city. These energy stations are clean, renewable resources that users can access without harming turtles. This ensures a new and civilized lifestyle where humans and turtles can live without contaminating each other's territories.\n\n3. **Energy])] Utilization**: Turtle-based energy stations are set up around the city. These energy stations are clean, renewable"
+      },
+      "detection": {
+        "vanilla": {
+          "kgw_z": -1.7905475715715027,
+          "gumbel_z": 0.27330861345746604,
+          "n_tokens": 55
+        },
+        "kgw": {
+          "kgw_z": 11.827982606062339,
+          "gumbel_z": 0.0642306328411338,
+          "n_tokens": 199
+        },
+        "gumbel": {
+          "kgw_z": -0.7776182336165551,
+          "gumbel_z": 26.159427897375952,
+          "n_tokens": 199
+        },
+        "wrong_key": {
+          "kgw_z": -1.26874553905859,
+          "gumbel_z": 1.4288730473396516
+        }
+      },
+      "mean_nll": {
+        "vanilla": 1.2198396008985324,
+        "kgw": 3.6267634832727844,
+        "gumbel": 1.9813153397257293
+      }
+    },
+    {
+      "prompt": "Explain to a curious child why the sky changes color at sunset.",
+      "texts": {
+        "vanilla": "Sure! The sky reacts differently when it's change color at sunset due to a process called \"weather modification\" or simply \"weather-changing.\" Let me explain it to you in simple terms:\n\nImagine the sun is a big, bright light source up in the sky. All the stars and other pretty little lights that make up the night sky come out to play. So when the day is over, the sun just disappears, leaving us with a bright, clear blue sky.\n\nThe air starts cooling down after the sun goes down. This cool air has a special ability to scatter light – it's like when you have a magic shield that lets you catch all those stars and lights because the air in your room is absorbing solar energy while you're inside. As the air cools, it becomes darker, and the light from the stars and other lights has a harder time going around it, so it's scattered more than usual. Because the light has to go a longer way to reach us, it moves up",
+        "kgw": "Sure, I'd be happy to help explain it to a curious child!\n\nFirst, let's talk about the sky! Just like the colors we're all familiar with, the sky gets colorful because of different gases and paint in the sky. Green is one of the main colors because of all of the green plants that grows on Earth and in rain clouds. Green is in the sky right now as it's just beginning to change!\n\nWhen it's sun-up and sun-down, we mostly see white because that light from the sun pours through our atmosphere and makes the sky pretty blue and green all at once. Just to be clear, sky blue and green are just different colors because of different chemicals in the sky.\n\nSo now, let's talk about what happens when the sky gets very dark at the end of the day. The sky magically turns gray and fading away, turning more and more blue and green colors until ... it finally turns to dark brown!\n\nWhen it finally turns dark brown right at sunset,",
+        "gumbel": "You know the sun sets on the plains, right? But what's really happening is that as the sun sets, the sun sets on the plains, and the plains, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of shadows, bunch of"
+      },
+      "detection": {
+        "vanilla": {
+          "kgw_z": -0.4502000299885319,
+          "gumbel_z": 0.22611712701561343,
+          "n_tokens": 199
+        },
+        "kgw": {
+          "kgw_z": 11.173146198806293,
+          "gumbel_z": -2.2336799809611834,
+          "n_tokens": 199
+        },
+        "gumbel": {
+          "kgw_z": -6.834855000734985,
+          "gumbel_z": 58.26202947113249,
+          "n_tokens": 199
+        },
+        "wrong_key": {
+          "kgw_z": -0.9413273354305668,
+          "gumbel_z": -7.164125269537673
+        }
+      },
+      "mean_nll": {
+        "vanilla": 1.8458997705783942,
+        "kgw": 2.09798166225626,
+        "gumbel": 0.5920848563581239
+      }
+    },
+    {
+      "prompt": "Tell a short story about a lighthouse keeper who collects bottled messages.",
+      "texts": {
+        "vanilla": "A brave lighthouse keeper, Sergeant Jake, had faced years of danger and exhaustion leading up to the coast. But spirits didn't reach him anymore, and the whispers of hidden messages grew more plausible.\n\nAs he walked his walk across the dark and stormy sea, he heard a tapping sound, a sudden whisper in the soft rain. Jake stopped, by sheer chance, to look down. To his relief, the words barely more than inscriptions had sunk into the drop in the stone. Jake is careful and cautious to detect all, and there was no single word or number from it, yet.\n\nWhat could this be? Everything Jake had ever heard sounded ominous or terrifying.\n\nCould it be a specific numerical secret? One set of soldiers under the command of General Pepper? No! Something else...\n\nJake's spirit grew, and he was afraid of any sentient being despite his knowledge of the lighthouse. But his intuition showed him the face of a powerful fortune.\n\nHe thought he saw the other lighthouse",
+        "kgw": "A lighthouse Keeper named Jack had been collecting bottled messages for decades along the coast of Maine. Each message was unique in its message, with some inscriptions filled with iconic words and some with simple messages. As years went by, Jack's dedication to collecting these messages turned into a quest of deep meaning.\n\nOne day when Jack was examining a batch of underwater bottles, a strange and yet familiar scent swept the air. He quickly analyzed the bottle and found that its contents contained the words of someone lost at sea and waiting to be found, perhaps sending a warning to other travelers.\n\nZoak, a young writer and Jack's creation, received a telegram threatening marriage and financial ruin for anyone or anything that defied its mission. As he sat and contemplated it, he recalled that someone carried a long red card bearing the initials \"LHD\" on top. \n\nUnraveled, the letters said \"Love at Sea\" and the name \"Ellie\". As he thought about Ellie, he recalled opportunities",
+        "gumbel": "Once upon a time, there was a lighthouse keeper named Jack. Jack was a kind and gentle man who was dedicated to his duty as the keeper of the lighthouse. Jack believed in the power of communication and the message of hope that it could bring.\n\nEvery day, Jack would wake up early and begin his work at the lighthouse. He entered the labyrinth of shadows and mist that enveloped the sea, searching for signs of human activity, such as the occasional boat passing close to the rocks. Jack would carefully examine the message on the bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle bottle"
+      },
+      "detection": {
+        "vanilla": {
+          "kgw_z": 0.6957636827095494,
+          "gumbel_z": 1.049822677913255,
+          "n_tokens": 199
+        },
+        "kgw": {
+          "kgw_z": 11.500564402434316,
+          "gumbel_z": -0.16593998361862172,
+          "n_tokens": 199
+        },
+        "gumbel": {
+          "kgw_z": -3.2332547608267292,
+          "gumbel_z": 45.68045981522739,
+          "n_tokens": 199
+        },
+        "wrong_key": {
+          "kgw_z": 0.0409272754535029,
+          "gumbel_z": -0.44128090625283506
+        }
+      },
+      "mean_nll": {
+        "vanilla": 3.202389454372824,
+        "kgw": 2.769897849431436,
+        "gumbel": 0.7852824311508811
+      }
+    }
+  ],
+  "human_baseline": {
+    "kgw_z": -2.8560993278922417,
+    "gumbel_z": 1.0282088048514377,
+    "n_tokens": 178
+  },
+  "attacks": {
+    "substitution": {
+      "0.1": {
+        "kgw_z": 11.336855300620304,
+        "gumbel_z": 23.636656051299553
+      },
+      "0.3": {
+        "kgw_z": 8.553800569782107,
+        "gumbel_z": 13.043628387992605
+      },
+      "0.5": {
+        "kgw_z": 3.9699457189897815,
+        "gumbel_z": 6.52188193379558
+      }
+    },
+    "paraphrase": {
+      "kgw_z": 0.046984098573493956,
+      "gumbel_z": 7.166271427457522,
+      "kgw_text": "These encounters on the ground with the rain offer an altogether different kind of allure and excitement for those disillusioned with daily activity. It is the path below the gentle sway that leaves with no need of swift feet to cross, showcasing a serene landscape with no hustle or bustle. \n\nWhen one adds laces to the path and a touch of an underlying grotto of shade, the rhythm is satisfying. Fridges of sogginess and sips of fresh waters under the support of rooted shade can meld seamlessly into a harmonious backdrop. The tranquil steeps-and-mixing of views can invite the villagers to immerse themselves in the restored power and anticipation, much like those who have reached depths of profound suspension in a stage of watching and listening.",
+      "gumbel_text": "Walking in the rain is an excellent way to enjoy a refreshing and calming experience. People find it refreshing as rain provides a relaxing soundtrack to the landscape, making it an ideal environment for a new and unfamiliar destination. The act of walking in rain also encourages awareness of the human mind, as one becomes aware of the plains of human consciousness in a new and unfamiliar territory. This awareness can be extremely comforting, particularly during a new and unfamiliar perspective."
+    }
+  },
+  "elapsed_sec": 41.67683410644531
+}

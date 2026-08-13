@@ -1,1 +1,54 @@
+Loading Qwen/Qwen2.5-0.5B-Instruct on mps ...
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]Loading weights:   0%|          | 1/290 [00:00<02:37,  1.83it/s]Loading weights:  96%|█████████▌| 279/290 [00:00<00:00, 548.90it/s]Loading weights: 100%|██████████| 290/290 [00:00<00:00, 431.22it/s]
+
+=== Prompt 1/4: Write a short essay about why people enjoy walking in the ra...
+  [vanilla] 200 tokens
+  [kgw] 200 tokens
+  [gumbel] 200 tokens
+  detect on vanilla: kgw z= -1.27  gumbel z=  0.61
+  detect on     kgw: kgw z= 13.79  gumbel z= -0.04
+  detect on  gumbel: kgw z= -0.78  gumbel z= 29.74
+  wrong key       : kgw z= -0.12  gumbel z=  0.99
+  mean NLL: vanilla=2.730  kgw=4.758  gumbel=1.259
+
+=== Prompt 2/4: Describe an imaginary city built entirely on the backs of gi...
+  [vanilla] 56 tokens
+  [kgw] 200 tokens
+  [gumbel] 200 tokens
+  detect on vanilla: kgw z= -1.79  gumbel z=  0.27
+  detect on     kgw: kgw z= 11.83  gumbel z=  0.06
+  detect on  gumbel: kgw z= -0.78  gumbel z= 26.16
+  wrong key       : kgw z= -1.27  gumbel z=  1.43
+  mean NLL: vanilla=1.220  kgw=3.627  gumbel=1.981
+
+=== Prompt 3/4: Explain to a curious child why the sky changes color at suns...
+  [vanilla] 200 tokens
+  [kgw] 200 tokens
+  [gumbel] 200 tokens
+  detect on vanilla: kgw z= -0.45  gumbel z=  0.23
+  detect on     kgw: kgw z= 11.17  gumbel z= -2.23
+  detect on  gumbel: kgw z= -6.83  gumbel z= 58.26
+  wrong key       : kgw z= -0.94  gumbel z= -7.16
+  mean NLL: vanilla=1.846  kgw=2.098  gumbel=0.592
+
+=== Prompt 4/4: Tell a short story about a lighthouse keeper who collects bo...
+  [vanilla] 200 tokens
+  [kgw] 200 tokens
+  [gumbel] 200 tokens
+  detect on vanilla: kgw z=  0.70  gumbel z=  1.05
+  detect on     kgw: kgw z= 11.50  gumbel z= -0.17
+  detect on  gumbel: kgw z= -3.23  gumbel z= 45.68
+  wrong key       : kgw z=  0.04  gumbel z= -0.44
+  mean NLL: vanilla=3.202  kgw=2.770  gumbel=0.785
+
+Human text (178 tokens): kgw z=-2.86  gumbel z=1.03
+
+=== Attacks (on prompt 1 outputs) ===
+  substitution 10%: kgw z= 11.34  gumbel z= 23.64
+  substitution 30%: kgw z=  8.55  gumbel z= 13.04
+  substitution 50%: kgw z=  3.97  gumbel z=  6.52
+  paraphrasing (this takes a while) ...
+  paraphrase      : kgw z=  0.05  gumbel z=  7.17
+
+Saved /Users/antipop/src/github.com/kentaro/llm-watermark-lab/results/results.json (42s total)

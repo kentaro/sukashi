@@ -40,6 +40,8 @@ def _prompt_ids(tok, prompt: str, device) -> torch.Tensor:
         add_generation_prompt=True,
         return_tensors="pt",
     )
+    if not isinstance(ids, torch.Tensor):
+        ids = ids["input_ids"]
     return ids.to(device)
 
 
