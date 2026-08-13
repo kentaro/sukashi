@@ -18,7 +18,7 @@
   <div class="links">
     <a href="#results">結果</a>
     <a href="#how">仕組み</a>
-    <a href="#details">詳細</a>
+    <a href="#fidelity">忠実度</a>
     <a href="#refs">文献</a>
     <a href="https://github.com/kentaro/sukashi">GitHub</a>
     <a class="lang" href="en/">English</a>
@@ -29,7 +29,7 @@
   <div class="hero-inner">
     <div class="glyph">透</div>
     <h1>LLMの文章に潜む<br><span class="accent">見えない透かし</span>を、<br>自分の手で作って確かめる</h1>
-    <p class="tagline">Claude が生成テキストに電子透かしを入れ始めた——それはどういう仕組みで、本当に「品質を変えず」「編集に耐える」のか。トークン空間型（KGW法・Gumbel-Max法）と意味空間型（SemStamp流）をゼロから実装し、Mac のローカル LLM だけで生成・検出・攻撃まで検証した記録。</p>
+    <p class="tagline">Claude が生成テキストに電子透かしを入れ始めた——それはどういう仕組みで、本当に「品質を変えず」「編集に耐える」のか。トークン空間型（KGW法・Gumbel-Max法）と意味空間型（SemStamp流）をゼロから実装し、Mac のローカル LLM だけで生成・検出・攻撃まで検証した記録。生成文はすべて無編集の実測サンプル。</p>
     <div class="meta">
       <a class="chip" href="https://github.com/kentaro/sukashi">github.com/kentaro/sukashi</a>
       <a class="chip" href="https://zenn.dev/hellorusk/articles/3328866ca9e922">きっかけの記事 (hellorusk, Zenn)</a>
@@ -43,11 +43,11 @@
 <section id="tldr">
   <span class="sec-label">TL;DR</span>
   <h2>3行でいうと</h2>
-  <p>透かしは「LLM が次の単語を選ぶときの、<em>どちらでもよい選択の揺らぎ</em>」に埋め込まれる。1語ずつは何の変哲もないが、数百トークン分の偏りを集計すると、人間の文章ではあり得ない統計的な癖（z値）が浮かぶ。トークン選択に埋め込む方式は言い換え1回で消えるが、<strong>文の意味ベクトルに埋め込む方式はパラフレーズを生き延びた</strong>。</p>
+  <p>透かしは「LLM が次の単語を選ぶときの、<em>どちらでもよい選択の揺らぎ</em>」に埋め込まれる。1語ずつは何の変哲もないが、数百トークン分の偏りを集計すると、人間の文章ではあり得ない統計的な癖（z値）が浮かぶ。トークン選択に埋め込む方式は言い換え1回で確実に消えるが、<strong>文の意味ベクトルに埋め込む方式は劣化しつつも生き残りうる</strong>——ただしその生死は埋め込みモデルの言い換え安定性に懸かっている。</p>
   <div class="stats">
-    <div class="stat"><div class="num">z = 4.75</div><div class="desc">意味空間型（SemStamp流）の透かし入り日本語エッセイの検出スコア。透かしなしは z = 1.83 で素通し</div></div>
-    <div class="stat"><div class="num">z = 4.43</div><div class="desc">同じエッセイを LLM でパラフレーズした<strong>後</strong>のスコア。意味空間型は言い換えを生き延びる</div></div>
-    <div class="stat"><div class="num dead">7.17 → 0.71</div><div class="desc">トークン空間型（KGW法）はパラフレーズ1回で透かしが消滅する</div></div>
+    <div class="stat"><div class="num">z = 4.02</div><div class="desc">意味空間型（SemStamp流・論文準拠のチェーン構造）の透かし入り日本語エッセイの検出スコア。透かしなしは z = 1.83 で素通し</div></div>
+    <div class="stat"><div class="num">z = 4.08</div><div class="desc">同じエッセイを透かしなしの LLM でパラフレーズした<strong>後</strong>のスコア（今回の実測）。ただし反復すると z = 1.1〜4.4 の間で振れる——確実な生存には論文の頑健エンコーダが必要</div></div>
+    <div class="stat"><div class="num dead">7.17 → 0.71</div><div class="desc">トークン空間型（KGW法）はパラフレーズ1回で毎回確実に透かしが消滅する（全試行で z ≈ 0）</div></div>
   </div>
 </section>
 
@@ -55,32 +55,32 @@
   <span class="sec-label">01 — Results</span>
   <h2>結果：透かしあり・なしを並べて読む</h2>
 
-  <h3>例1｜意味空間型（SemStamp流）— パラフレーズに耐える透かし</h3>
-  <p>同じプロンプト（「人はなぜ雨の中の散歩を楽しむのか」のエッセイ）から、透かしなしと透かし入りを生成した。生成モデルは Sarashina2.2-3B-instruct、文埋め込みは ruri-v3-30m。<strong>内容が違うのは透かしのせいではない</strong>——LLM は同じプロンプトでも実行のたびに別の文章を書く。透かしの痕跡は文面のどこにもなく、検出器が集計する統計量にだけ現れる。</p>
+  <h3>例1｜意味空間型（SemStamp流）— 劣化はするが壊滅しない透かし</h3>
+  <p>同じプロンプト（「人はなぜ雨の中の散歩を楽しむのか」のエッセイ）から、透かしなしと透かし入りを生成した。生成モデルは Sarashina2.2-3B-instruct、文埋め込みは ruri-v3-30m、有効領域は論文と同じく前の文の署名から導出（チェーン構造）。<strong>内容が違うのは透かしのせいではない</strong>——LLM は同じプロンプトでも実行のたびに別の文章を書く。透かしの痕跡は文面のどこにもなく、検出器が集計する統計量にだけ現れる。</p>
 
   <div class="pair-wrap"><div class="pair">
     <div class="sample">
       <div class="head"><span class="t">透かしなし</span><span class="z miss">z = 1.83 ／ 未検出</span></div>
-      <div class="body"><p>人はなぜ雨の中の散歩を楽しむのでしょうか。それは早割で得ることができる独特の感覚や体験に魅了されるからだと言えるでしょう。雨は日常生活に突然訪れる変化であり、その湿気や音が普段とは異なる雰囲気をもたらします。まず、雨音の静寂が心地よいからです。ザーザーと降る雨水が地面を叩く音が、忙しい日常からひとときの安らぎを与えてくれます。この雨音に包まれることで、心を落ち着かせることができ、日常の雑踏から離れ、自然と一体感を感じることができます。次に、雨に濡れた路面や木々の緑が鮮やかな色彩を醸し出すからです。雨の日には光が柔らかく散乱し、世界がより幻想的に見えるのです。特に、濡れた葉っぱや地面に反射する太陽光が描く光の帯は、見る者に不思議な美しさを感じさせます。こうした視覚的な楽しさが、雨の中の散歩をより魅力的なものにします。</p></div>
-      <div class="note">10文。文埋め込みが「当たり領域」に落ちた文は偶然の範囲（期待値25%）</div>
+      <div class="body"><p>人はなぜ雨の中の散歩を楽しむのでしょうか。それは早割で得ることができる独特の感覚や体験が関係しているのかもしれません。雨粒が肌にぶつかる感触、道路に反射する雨水の光が作る幻想的な模様、そして雨が空気を湿らせることで一層際立つ緑の香り。これらは雨の中だからこそ体験できる特別な要素です。さらに、雨の日には人混みが少なく、静かな時間が流れるため、日常の喧騒から離れてゆっくりと自分と向き合うことができます。雨音は自然の音楽とも言え、そのリズムに耳を傾けながら歩くのは、心が落ち着く時間となります。また、雨の日は色彩が豊かに感じられる瞬間でもあります。濡れた路面や木々の葉が水分を含み、日光が散乱することで、普段の景色がより鮮やかに見えるのです。このような視覚的な喜びも、雨の中の散歩を魅力的にしている一因でしょう。最後に、雨は新たな始まりの象徴でもあります。</p></div>
+      <div class="note">10文。文埋め込みが「当たり領域」に落ちた文は偶然の範囲（期待値25%）。2文目の「早割」は3Bモデルの生成の癖（無編集掲載）</div>
     </div>
     <div class="sample">
-      <div class="head"><span class="t">SemStamp透かし入り</span><span class="z hit">z = 4.75 ／ 検出</span></div>
-      <div class="body"><p>雨の中の散歩は、一見すると少し変わっているように見えるかもしれませんが、そこには独特の魅力と理由があります。まず、雨音は心を静めてくれる効果があります。ザーザーと降る雨の音を聞きながら歩むことで、日常の騒音から離れ、心穏やかな気持ちになることができます。次に、雨が地面に降り注ぐ様子や、木々の葉に水滴が宿る姿は、とても美しく見えます。この自然の美しさは、雨の日ならではの特権であり、普段の日常生活の中では見過ごしがちな細部にも目を向ける機会となります。散歩中に sights and sounds が変化することで、新しい発見や楽しみが生まれます。さらに、雨中の散歩は季節の移り変わりを肌で感じることができます。春の雨、夏の雨、秋の雨、それぞれ異なる雰囲気があり、それを感じるたびに季節の変化を実感することができます。このことは、時間の流れに対する意識を改めて見直すきっかけにもなります。また、雨中の散歩は精神的なリフレッシュ効果も抜群です。</p></div>
-      <div class="note">10文すべてが鍵の指定する「当たり領域」に着地。文ごとの再生成回数は [6, 17, 4, 3, 1, 3, 2, 1, 2, 4]（平均4.3回の棄却サンプリング）</div>
+      <div class="head"><span class="t">SemStamp透かし入り</span><span class="z hit">z = 4.02 ／ 検出</span></div>
+      <div class="body"><p>人はなぜ雨の中の散歩を楽しむのでしょうか。その理由をいくつか探ってみましょう。まず、雨の日の散歩は独特の雰囲気があります。雨音が静かに降る中を歩くと、日常の喧騒から少し離れて、心が落ち着くのを感じるのです。これは、雨が自然のヒーリング効果を持っているからかもしれません。雨の音は瞑想のように心に安らぎを与え、忙しい日常を忘れることができるのです。次に、雨に濡れた地面や葉、建物が見せる美しさも理由の一つです。雨が上がった後の道には水滴がつき、それが光の反射でキラキラと輝きます。この光景は、普段の町並みに新たな生命感をもたらし、普段とは異なる視点で周囲を見ることができます。また、雨に濡れた植物の香りも楽しめますし、その香りが心に安らぎを与えてくれます。</p></div>
+      <div class="note">10文。文ごとの再生成回数は [1, 7, 17, 17, 2, 3, 4, 17, 1, 2]（棄却サンプリング、17は上限到達）。品質フィルタで英語の混入候補は棄却している</div>
     </div>
   </div></div>
 
   <p>この透かし入りエッセイを、<strong>透かし機能を切った素のモデル</strong>に「意味を保ったまま、できるだけ違う言い回しで」書き直させた。攻撃者が透かしなしの LLM に通して透かしを洗い流そうとする状況の再現で、書き直し側が新たな透かしを足すことはない。トークン列は大きく入れ替わったが——</p>
 
   <div class="sample">
-    <div class="head"><span class="t">↑ をパラフレーズした後</span><span class="z hit">z = 4.43 ／ まだ検出できる</span></div>
-    <div class="body"><p>雨中の散歩は、一見すると特別な行動に映るかもしれませんが、実際には独特の魅力と価値があります。まず、雨音は心を静寂へと導く効果があります。ザーザーと雨が降る音を聞きながら歩くことで、日常の喧騒から離れ、心安らぐ気持ちになれます。次に、雨が地面に降り注ぐ様子や、木々の葉に水滴が宿る光景は、非常に美しく見えます。こうした雨の日ならではの自然の美は、日常生活の中では見逃しがちな細部に意識を向ける機会を提供してくれます。散歩中、sights and sounds が変化により、新しい発見や楽しみがもたらされます。さらに、雨中の散歩を通じて季節の移ろいを肌で感じることができ、春の雨、夏の雨、秋の雨など、それぞれ異なる雰囲気を味わうことで、季節の変化を実感できます。このことは、時間の経過に対する自覚を再確認するきっかけともなります。最後に、雨中の散歩は精神的なリフレッシュ効果も非常に高く、心新たになる経験をもたらします。</p></div>
-    <div class="note">言い回しは変わっても文の意味は変わらないため、埋め込みベクトルは同じ領域に留まる。9文中のヒット率はほぼ維持された</div>
+    <div class="head"><span class="t">↑ をパラフレーズした後</span><span class="z hit">z = 4.08 ／ まだ検出できる</span></div>
+    <div class="body"><p>人が雨の中の散歩を楽しむ理由の一つに、雨の日の独特な雰囲気があります。雨音が静かに降る中を歩くことで、日常の騒音から離れ、心が落ち着くのを感じるのです。これは雨が自然のヒーリング効果をもたらしているからかもしれません。雨音は瞑想のように心に安らぎを与え、忙しい日常から一時的に解放されることができます。</p><p>さらに、雨に濡れた地面や葉、建物の美しさも理由の一つです。雨が止んだ後の道は水滴が付着し、それが光の反射でキラキラと輝きます。この光景は、普段の町並みに新たな生命感を与え、普段とは異なる視点で周囲を見る機会を提供してくれます。また、雨に濡れた植物からは特有の香りが漂い、その香りが心に安らぎを与えてくれます。</p></div>
+    <div class="note">言い回しは変わっても文の意味は変わらないため、埋め込みベクトルの多くが同じ領域に留まった。<strong>ただしこの生存は毎回ではない</strong>——反復実験ではパラフレーズ後の z は 1.35〜4.43 の間で振れた（詳細は「実装の忠実度」節）</div>
   </div>
 
-  <h3>例2｜トークン空間型（KGW法）— 自然な文章に埋まるが、言い換えで消える</h3>
-  <p>同じ Sarashina で、KGW法（グリーンリストの語のロジットに加点）の透かしを入れたエッセイ。読んだだけでは透かしの有無は分からないが、検出器は言い当てる。ところが同じパラフレーズ攻撃で、こちらは消滅した。</p>
+  <h3>例2｜トークン空間型（KGW法）— 自然な文章に埋まるが、言い換えで確実に消える</h3>
+  <p>同じ Sarashina で、KGW法（グリーンリストの語のロジットに加点）の透かしを入れたエッセイ。読んだだけでは透かしの有無は分からないが、検出器は言い当てる。ところが同じパラフレーズ攻撃で、こちらは毎回確実に消滅した。</p>
 
   <div class="sample">
     <div class="head"><span class="t">KGW透かし入り</span><span class="z hit">z = 7.17 ／ 検出</span></div>
@@ -91,7 +91,7 @@
       <p>また、雨の日は人が少なく、ゆっくりと歩くことができます。人混みを避けて自分のペースで探求する時間を過ごすことができるのです。これが普段の日常とは少し異なる、特別な体験をもたらします。</p>
       <p>最後に、雨の中の散歩は自己発見の場ともなり得ます。静かに自分を省みる時間を持つことで、普段見逃しがちな感情や思考を整理することができます。雨に濡れることによる肌感覚も、新たなインスピレーションを引き出すきっかけとなります。</p>
     </div>
-    <div class="note">同じ文章を透かしなしのモデルでパラフレーズすると <span class="z dead">z = 0.71 ／ 消滅</span> — 透かしの実体が「表層のトークン選択の偏り」なので、トークン列が総入れ替えになると消える</div>
+    <div class="note">同じ文章を透かしなしのモデルでパラフレーズすると <span class="z dead">z = 0.71 ／ 消滅</span> — 透かしの実体が「表層のトークン選択の偏り」なので、トークン列が総入れ替えになると消える。「enjoyする」「Raindropsが」の英語混入は、ロジット加点が生成を歪めた副作用でもある（無編集掲載）</div>
   </div>
 
   <h3>例3｜透かしはどこにあるのか — 全トークンの塗り分け</h3>
@@ -119,7 +119,7 @@
     <tr><td>間違った鍵で検出</td><td class="mono">-0.42</td><td class="mono">0.16</td></tr>
     <tr><td>人間の文章（Austen）</td><td class="mono">-1.51</td><td class="mono">0.18</td></tr>
   </table></div>
-  <p>攻撃実験。ランダムなトークン置換では徐々に減衰し、LLMによるパラフレーズ1回で両方式とも消滅した。</p>
+  <p>攻撃実験。ランダムなトークン置換では徐々に減衰し、透かしなしLLMによるパラフレーズ1回で両方式とも消滅した。</p>
   <div class="tbl-wrap"><table>
     <tr><th>攻撃</th><th class="mono">KGW z</th><th class="mono">Gumbel z</th></tr>
     <tr><td>なし</td><td class="mono">5.55</td><td class="mono">38.79</td></tr>
@@ -152,7 +152,7 @@
     <div class="scheme">
       <div class="k">EMBEDDING SPACE / 2024–</div>
       <h4>SemStamp流（意味空間型）</h4>
-      <p>文単位で生成し、文埋め込みが鍵の指定する「当たり領域」（LSHで分割）に落ちる文だけ採択する棄却サンプリング。言い換えても意味ベクトルは動かないため、透かしが生き残る。</p>
+      <p>文単位で生成し、文埋め込みが「当たり領域」（鍵由来のLSHで分割し、前の文の署名から導出）に落ちる文だけ採択する棄却サンプリング。言い換えても意味ベクトルは動きにくいため、透かしが生き残りうる。</p>
       <span class="tag alive">sukashi 本体</span>
     </div>
   </div>
@@ -173,8 +173,8 @@
       <line x1="257" y1="102" x2="248" y2="109" stroke="#2c4a8f" stroke-width="1.4" marker-end="url(#arr)"/>
       <text x="278" y="88" font-size="12" fill="#211d18">生成文</text>
       <text x="180" y="118" font-size="11" fill="#7a7263" text-anchor="end">パラフレーズ後も</text>
-      <text x="180" y="134" font-size="11" fill="#7a7263" text-anchor="end">同じ領域に留まる</text>
-      <text x="330" y="150" font-size="12" fill="#2c4a8f">当たり領域（鍵が指定）</text>
+      <text x="180" y="134" font-size="11" fill="#7a7263" text-anchor="end">同じ領域に留まりやすい</text>
+      <text x="330" y="150" font-size="12" fill="#2c4a8f">当たり領域（鍵＋前の文が指定）</text>
       <line x1="322" y1="145" x2="290" y2="112" stroke="#2c4a8f" stroke-width="0.8"/>
       <text x="200" y="245" font-size="11" fill="#7a7263" text-anchor="middle">文埋め込み空間を鍵由来の超平面（LSH）で領域分割する</text>
       <text x="440" y="60" font-size="12" fill="#211d18" font-weight="bold">生成ループ</text>
@@ -184,13 +184,8 @@
       <text x="440" y="145" font-size="11" fill="#7a7263">　 外れたら 1 に戻る</text>
       <text x="440" y="165" font-size="11" fill="#7a7263">（棄却サンプリング）</text>
     </svg>
-    <figcaption>SemStamp流の意味空間透かし。言い換えで表層のトークン列が総入れ替えになっても、文の意味ベクトルは近傍に留まるため、当たり領域から出にくい。</figcaption>
+    <figcaption>SemStamp流の意味空間透かし。言い換えで表層のトークン列が総入れ替えになっても、文の意味ベクトルは近傍に留まるため、当たり領域から出にくい——埋め込みモデルが言い換えに安定している限りにおいて。</figcaption>
   </figure>
-</section>
-
-<section id="details">
-  <span class="sec-label">03 — Details</span>
-  <h2>詳細：検出の数理と実装</h2>
 
   <h3>検出はすべて仮説検定</h3>
   <p>3方式とも、検出は「このテキストの統計量は、透かしなしの帰無仮説から何σ外れているか」の一点に帰着する。KGW と SemStamp は二項検定の正規近似、Gumbel は指数分布の和（Gamma 近似）を使う。</p>
@@ -202,15 +197,33 @@ S = Σ −log(1 − r[chosen])
 z = (S − n) / √n</code></pre>
   <p>z &gt; 4 は片側 p &lt; 3×10⁻⁵。この検定が意味を持つのは、鍵と生成側が<em>まったく同じ疑似乱数</em>（グリーンリスト・乱数ベクトル・LSH超平面）を再現できるからで、生成と検出が「鍵＋文脈 → 乱数」の決定的な導出を共有している。</p>
 
-  <h3>ハッシュ文脈の窓幅というトレードオフ</h3>
-  <p>疑似乱数の種を「直前1トークン」から取ると、固定鍵の下で生成が決定的になり、同じ文脈で同じ語が選ばれ続けて反復ループが生じる（日本語では「その日に　その日に　……」と顕著に壊れた）。直前4トークンの窓に広げるとループは消えるが、今度は1箇所の編集が自身＋後続4窓の計5箇所の検定を汚染するため、編集耐性が大きく下がる。品質・検出力・頑健性は同時に最大化できない。</p>
-
-  <h3>SemStamp流の実装</h3>
-  <p>文埋め込み（ruri-v3-30m, 256次元）を鍵由来のランダム超平面4枚で 2⁴=16 領域に分割し、鍵が選んだ4領域（γ=25%）を「当たり」とする。生成は文単位の棄却サンプリング（最大16回、境界からのマージン付き）。今回の10文のエッセイでは文あたり平均4.3回の再生成を要した——透かしのコストが「品質」ではなく「計算量」として現れるのが意味空間型の特徴といえる。</p>
-
   <div class="callout">
     <strong>「同じ文章の透かしあり・なし」は作れない。</strong>自己回帰生成では、1語変わるとそれ以降はその語を前提に生成されるため、構造ごと別の文章に育つ（温度0の実験では、書き出し「雨の中の散歩は、日本の」まで完全一致した直後、「風土」／「伝統」の1語の分岐からエッセイ調と説明調に分かれた）。透かしが保証するのは個々のテキストの同一性ではなく、<em>生成される文章の分布</em>が変わらないこと（distortion-free 方式の場合）である。
   </div>
+</section>
+
+<section id="fidelity">
+  <span class="sec-label">03 — Fidelity</span>
+  <h2>実装の忠実度と、頑健性の実際</h2>
+  <p>この実装は SemStamp 論文の骨格——鍵由来LSHによる意味空間の領域分割、前の文の署名から導く有効領域（チェーン構造）、境界マージン付きの文単位棄却サンプリング、ヒット率の z 検定——をそのまま持っている。ただし1つ、意図的に省いた部品がある。<strong>パラフレーズ頑健エンコーダ</strong>である。</p>
+  <p>論文は、文埋め込みモデルを言い換えペアで対照学習し、「言い換えても LSH 署名が反転しない」エンコーダを作ってから透かしを載せる。本実装は市販の埋め込みモデル（ruri-v3-30m / all-MiniLM-L6-v2）をそのまま使った。その差は、言い換えでの署名ビット反転率として直接測れる：</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>埋め込みモデル</th><th>言語</th><th class="mono">言い換え忠実度 cos</th><th class="mono">LSH符号反転率</th></tr>
+    <tr><td>ruri-v3-30m</td><td>日本語</td><td class="mono">0.952</td><td class="mono">4/36 (11%)</td></tr>
+    <tr><td>all-MiniLM-L6-v2</td><td>英語</td><td class="mono">0.797</td><td class="mono">10/48 (21%)</td></tr>
+    <tr><td>all-mpnet-base-v2</td><td>英語</td><td class="mono">0.823</td><td class="mono">16/48 (33%)</td></tr>
+  </table></div>
+  <p>この反転率が生死を分ける。今日の全実測（各条件1〜2回、10〜13文のエッセイ）：</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>条件</th><th class="mono">透かし入り z</th><th class="mono">パラフレーズ後 z</th></tr>
+    <tr><td>日本語・チェーン構造（論文準拠）</td><td class="mono">4.02</td><td class="mono"><span class="hi">4.08</span> 生存</td></tr>
+    <tr><td>日本語・固定領域（簡略変種）</td><td class="mono">4.75</td><td class="mono">1.35 / <span class="hi">4.43</span>（2回実施、振れる）</td></tr>
+    <tr><td>英語・チェーン構造</td><td class="mono">2.45</td><td class="mono"><span class="lo">-0.82</span> 消滅</td></tr>
+    <tr><td>英語・固定領域</td><td class="mono">4.67</td><td class="mono">1.12 減衰</td></tr>
+    <tr><td>（参考）KGW・日英</td><td class="mono">7.17 / 14.24</td><td class="mono"><span class="lo">0.71 / -0.92</span> 毎回消滅</td></tr>
+  </table></div>
+  <p>まとめるとこうなる。<strong>KGW（トークン空間型）はパラフレーズで毎回確実に z ≈ 0 へ沈む。意味空間型は劣化はするが壊滅せず、日本語では検出しきい値を越えて生き残ることもある</strong>——ruri の反転率が11%と低いからだ。しかし反転がゼロでない限り生存は確率的で、10文程度の短いテキストでは結果が振れる。論文が頑健エンコーダの対照学習をわざわざ行うのは、この反転を潰して生存を「たまたま」から「保証」に変えるためである。</p>
+  <p>実装上の教訓も2つ得た。(1) 市販埋め込みは<em>異方性</em>が強く、原点を通る超平面では領域分割が偏る——アンカー文集合の平均でセンタリングして解決した。(2) 棄却サンプリングは品質を見ずに「領域に入った文」を採るため、素通しにすると英語混じりの候補文まで採用してしまう——候補フィルタを透かしあり・なし双方に同条件で入れて解決した。</p>
 </section>
 
 <section id="limits">
@@ -218,10 +231,10 @@ z = (S − n) / √n</code></pre>
   <h2>制約</h2>
   <ul>
     <li><strong>短いテキストでは検出できない。</strong>証拠はトークン数（文数）に比例して蓄積する。実測では、同じ形式の箇条書きで57トークン（z=3.90）では判定しきい値に届かず、113トークン（z=5.38）で届いた。SemStamp流は文単位なので、さらに長い文章が要る。</li>
-    <li><strong>低エントロピーな場面に弱い。</strong>答えがほぼ一意なコードや事実の記述には埋め込む「揺らぎ」自体がない。KGW で強引に埋め込むと品質劣化が表面化する（実測：δ=2 のロジット加点が「常体で」「1文だけ」という書式指示の遵守を壊した）。</li>
-    <li><strong>意味空間型も万能ではない。</strong>翻訳・要約・大幅な書き換えのように文の意味単位そのものが組み変わる編集には耐えられない。マージンや領域数の設計は検出力とのトレードオフになる。</li>
+    <li><strong>低エントロピーな場面に弱い。</strong>答えがほぼ一意なコードや事実の記述には埋め込む「揺らぎ」自体がない。KGW で強引に埋め込むと品質劣化が表面化する（実測：δ=2 のロジット加点が「常体で」「1文だけ」という書式指示の遵守を壊し、英語フレーズの混入も引き起こした）。</li>
+    <li><strong>意味空間型の言い換え耐性は埋め込みモデル次第。</strong>市販埋め込みのままでは生存は確率的（上の表のとおり）。翻訳・要約・大幅な書き換えのように文の意味単位そのものが組み変わる編集には、頑健エンコーダがあっても耐えられない。</li>
     <li><strong>検出は「AI が書いた証拠」にならない。</strong>人間の文章を LLM に校正させただけでも透かしは付く。検出できるのは「このモデル（鍵）が処理した」ことまでで、著者性の証明ではない——Anthropic 自身も同じ注意書きをしている。</li>
-    <li><strong>本実装は学習用の最小構成。</strong>鍵ローテーション・複数鍵・n-gram 重複除去・本番規模の誤検出率評価（SynthID-Text は2,000万件規模で評価している）は扱っていない。</li>
+    <li><strong>本実装は学習用の最小構成。</strong>頑健エンコーダの学習・鍵ローテーション・複数鍵・本番規模の誤検出率評価（SynthID-Text は2,000万件規模で評価している）は扱っていない。</li>
   </ul>
 </section>
 
@@ -229,9 +242,10 @@ z = (S − n) / √n</code></pre>
   <span class="sec-label">05 — Future Work</span>
   <h2>今後の展望</h2>
   <ul>
+    <li><strong>パラフレーズ頑健エンコーダの学習。</strong>本実装に欠けている最後の部品。日本語なら JSNLI や PAWS-X の言い換えペアで ruri を対照学習すれば、符号反転率を数%以下に落とし、生存を「たまたま」から「保証」に近づけられる見込み。</li>
     <li><strong>マルチビット化。</strong>「AI が書いたか」の1ビットではなく、ユーザーID やタイムスタンプを埋め込んで復号する（Qu et al., USENIX Security 2025）。リーク元追跡の本命とされる方向。</li>
     <li><strong>post-hoc 型。</strong>ロジットに触れられないブラックボックス API 越しの透かし（SAEMark, NeurIPS 2025）。Sparse Autoencoder の特徴量で候補出力を選別する。</li>
-    <li><strong>distortion-free × 言い換え耐性の理論的両立</strong>（PASA, ICML 2026）。今回トークン空間型と意味空間型で別々に確かめた2つの性質を、1つの枠組みで達成する研究の追実装。</li>
+    <li><strong>distortion-free × 言い換え耐性の理論的両立</strong>（PASA, ICML 2026）。今回別々に確かめた2つの性質を、1つの枠組みで達成する研究の追実装。</li>
     <li><strong>Anthropic の検出ツールとの答え合わせ。</strong>Claude の透かしの技術詳細は未公開。検出ツールが公開されたら、この実装の挙動と突き合わせたい。</li>
   </ul>
 </section>
@@ -245,13 +259,13 @@ z = (S − n) / √n</code></pre>
     <li>Kuditipudi et al., "<a href="https://arxiv.org/abs/2307.15593">Robust Distortion-free Watermarks for Language Models</a>" (2023). — Gumbel-Max系の定式化</li>
     <li>Dathathri et al., "<a href="https://www.nature.com/articles/s41586-024-08025-4">Scalable watermarking for identifying large language model outputs</a>" (Nature, 2024). — SynthID-Text</li>
     <li>Krishna et al., "<a href="https://arxiv.org/abs/2303.13408">Paraphrasing evades detectors of AI-generated text, but retrieval is an effective defense</a>" (NeurIPS 2023). — パラフレーズ攻撃</li>
-    <li>Hou et al., "<a href="https://arxiv.org/abs/2310.03991">SemStamp: A Semantic Watermark with Paraphrastic Robustness for Text Generation</a>" (NAACL 2024). — 本実装の元</li>
+    <li>Hou et al., "<a href="https://arxiv.org/abs/2310.03991">SemStamp: A Semantic Watermark with Paraphrastic Robustness for Text Generation</a>" (NAACL 2024). — 本実装の元。パラフレーズ頑健エンコーダの対照学習を含む</li>
     <li>Qu et al., "Provably Robust Multi-bit Watermarking for AI-generated Text" (USENIX Security 2025).</li>
     <li>Yu et al., "SAEMark: Multi-bit LLM Watermarking with Inference-Time Scaling" (NeurIPS 2025).</li>
     <li>Ai &amp; He, "PASA: A Principled Embedding-Space Watermarking Approach for LLM-Generated Text under Semantic-Invariant Attacks" (ICML 2026).</li>
     <li>Anthropic, "<a href="https://support.claude.com/en/articles/16266773-how-claude-marks-ai-generated-content">How Claude marks AI-generated content</a>" (2026).</li>
   </ol>
-  <p>実装に使ったモデル：<a href="https://huggingface.co/sbintuitions/sarashina2.2-3b-instruct-v0.1">sarashina2.2-3b-instruct-v0.1</a>（SB Intuitions）, <a href="https://huggingface.co/cl-nagoya/ruri-v3-30m">ruri-v3-30m</a>（名古屋大学 笹野研究室）, Qwen2.5-instruct 0.5B/1.5B（Alibaba）。すべて Apple Silicon の MPS 上でローカル実行。</p>
+  <p>実装に使ったモデル：<a href="https://huggingface.co/sbintuitions/sarashina2.2-3b-instruct-v0.1">sarashina2.2-3b-instruct-v0.1</a>（SB Intuitions）, <a href="https://huggingface.co/cl-nagoya/ruri-v3-30m">ruri-v3-30m</a>（名古屋大学 笹野研究室）, Qwen2.5-instruct 0.5B/1.5B（Alibaba）, all-MiniLM-L6-v2 / all-mpnet-base-v2（Sentence Transformers）。すべて Apple Silicon の MPS 上でローカル実行。数値はいずれも 2026-08-13 の実測。</p>
 </section>
 
 </main>

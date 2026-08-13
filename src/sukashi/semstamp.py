@@ -138,6 +138,7 @@ def generate_semstamp(
     candidate_filter=None,
     temperature: float = 1.0,
     top_p: float = 0.95,
+    chained: bool = True,
 ) -> SemStampResult:
     """Sentence-level rejection sampling against a key-derived LSH partition.
 
@@ -155,6 +156,7 @@ def generate_semstamp(
 
     for si in range(max_sentences):
         accepted = None
+        fallback = None
         for attempt in range(max_tries if (watermark or candidate_filter) else 1):
             seed = key * 7919 + si * 104729 + attempt
             text, ids = _sample_sentence(model, tok, context, seed,
@@ -162,7 +164,10 @@ def generate_semstamp(
             if not text.strip() or ids.shape[1] == 0:
                 break
             if candidate_filter is not None and not candidate_filter(text.strip()):
+                if fallback is None:
+                    fallback = (text, ids)
                 continue
+            fallback = (text, ids)
             if not watermark:
                 accepted = (text, ids)
                 break
@@ -173,14 +178,15 @@ def generate_semstamp(
                 accepted = (text, ids)
                 break
         else:
-            # No candidate passed; keep the last one so generation continues.
-            accepted = (text, ids)
+            # Nothing landed in a valid region; keep the last candidate that
+            # passed the quality filter so generation continues.
+            accepted = fallback
             attempt = max_tries
         if accepted is None:
             break
         sentences.append(accepted[0].strip())
         tries_log.append(attempt + 1)
-        if watermark and lsh is not None:
+        if watermark and chained and lsh is not None:
             prev_sig = lsh.signature(embed_fn(accepted[0].strip()))
         context = torch.cat([context, accepted[1].to(device)], dim=1)
         if tok.eos_token_id in accepted[1][0].tolist():
@@ -197,6 +203,7 @@ def detect_semstamp(
     n_planes: int = 4,
     gamma: float = 0.25,
     center: torch.Tensor | None = None,
+    chained: bool = True,
 ) -> Detection:
     """z-test on the fraction of sentences whose embedding lands in a valid region."""
     lsh = LshWatermark(key, dim, n_planes, gamma, center)
@@ -209,7 +216,8 @@ def detect_semstamp(
         emb = embed_fn(s)
         if lsh.signature(emb) in lsh.valid_set(prev_sig):
             hits += 1
-        prev_sig = lsh.signature(emb)
+        if chained:
+            prev_sig = lsh.signature(emb)
     n = len(sentences)
     g = lsh.gamma_eff
     z = (hits - g * n) / math.sqrt(n * g * (1 - g))
