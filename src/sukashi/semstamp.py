@@ -99,13 +99,14 @@ class SemStampResult:
 
 
 @torch.no_grad()
-def _sample_sentence(model, tok, context_ids, seed: int, max_tokens: int = 80) -> tuple[str, torch.Tensor]:
+def _sample_sentence(model, tok, context_ids, seed: int, max_tokens: int = 80,
+                     temperature: float = 1.0, top_p: float = 0.95) -> tuple[str, torch.Tensor]:
     torch.manual_seed(seed)
     out = model.generate(
         input_ids=context_ids,
         do_sample=True,
-        temperature=1.0,
-        top_p=0.95,
+        temperature=temperature,
+        top_p=top_p,
         max_new_tokens=max_tokens,
         pad_token_id=tok.eos_token_id,
     )
@@ -134,10 +135,16 @@ def generate_semstamp(
     max_tries: int = 16,
     watermark: bool = True,
     center: torch.Tensor | None = None,
+    candidate_filter=None,
+    temperature: float = 1.0,
+    top_p: float = 0.95,
 ) -> SemStampResult:
     """Sentence-level rejection sampling against a key-derived LSH partition.
 
-    embed_fn maps a sentence string to a 1-D embedding tensor.
+    embed_fn maps a sentence string to a 1-D embedding tensor. candidate_filter,
+    if given, is a str -> bool quality gate; rejected candidates are resampled
+    (this applies to unwatermarked generation as well, so both sides of a
+    comparison get the same quality constraint).
     """
     device = next(model.parameters()).device
     context = _prompt_ids(tok, prompt, device)
@@ -148,11 +155,14 @@ def generate_semstamp(
 
     for si in range(max_sentences):
         accepted = None
-        for attempt in range(max_tries if watermark else 1):
+        for attempt in range(max_tries if (watermark or candidate_filter) else 1):
             seed = key * 7919 + si * 104729 + attempt
-            text, ids = _sample_sentence(model, tok, context, seed)
+            text, ids = _sample_sentence(model, tok, context, seed,
+                                         temperature=temperature, top_p=top_p)
             if not text.strip() or ids.shape[1] == 0:
                 break
+            if candidate_filter is not None and not candidate_filter(text.strip()):
+                continue
             if not watermark:
                 accepted = (text, ids)
                 break
