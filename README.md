@@ -42,39 +42,45 @@ Results are written to `results/results.json`.
 (one-sided p < 3e-5). Human text and wrong-key detection should stay
 around `|z| < 2`.
 
-## Results (Qwen2.5-0.5B-Instruct, MPS, 200 tokens/sample, 42s total)
+## Results (Qwen2.5-0.5B-Instruct, MPS, 200 tokens/sample, 39s total)
 
-Detection z-scores, averaged over 4 prompts:
+Both schemes hash a sliding window of the last 4 generated tokens
+(`CONTEXT_WIDTH` in `common.py`). Detection z-scores, averaged over 4 prompts:
 
 | text under test        | KGW detector | Gumbel detector |
 |------------------------|-------------:|----------------:|
-| vanilla (no watermark) |        -0.70 |            0.54 |
-| KGW-watermarked        |    **12.07** |           -0.60 |
-| Gumbel-watermarked     |        -2.91 |       **39.96** |
-| wrong key              |        -0.57 |           -1.30 |
-| human text (Austen)    |        -2.86 |            1.03 |
+| vanilla (no watermark) |        -0.76 |            0.73 |
+| KGW-watermarked        |     **9.78** |           -0.07 |
+| Gumbel-watermarked     |        -0.90 |       **34.99** |
+| wrong key              |        -0.42 |            0.16 |
+| human text (Austen)    |        -1.51 |            0.18 |
 
-Quality (mean NLL in nats/token under the same model): KGW distorts the
-distribution as predicted (e.g. 2.73 -> 4.76 on prompt 1), while Gumbel-Max
-does not degrade likelihood.
+Quality (mean NLL in nats/token under the same model, averaged):
+vanilla 2.25, KGW 3.02, Gumbel 2.77. KGW measurably distorts the
+distribution (worst case 1.22 -> 4.39); the Gumbel gap to vanilla is
+sampling noise, consistent with its distortion-free construction.
 
-Attacks (on prompt 1 outputs):
+Attacks (on prompt 1 outputs, re-tokenized from text):
 
 | attack            | KGW z | Gumbel z |
 |-------------------|------:|---------:|
-| none              | 13.79 |    29.74 |
-| substitution 10%  | 11.34 |    23.64 |
-| substitution 30%  |  8.55 |    13.04 |
-| substitution 50%  |  3.97 |     6.52 |
-| paraphrase (LLM)  |  0.05 |     7.17 |
+| none              |  5.55 |    38.79 |
+| substitution 10%  |  2.45 |    19.61 |
+| substitution 30%  | -0.82 |     7.27 |
+| substitution 50%  |  1.31 |     0.40 |
+| paraphrase (LLM)  | -1.45 |    -0.66 |
 
-The paraphrase attack wipes out the KGW watermark in a single pass,
-reproducing the key weakness discussed in the article. The residual Gumbel
-signal after paraphrase is explained by the weak 0.5B paraphraser copying
-several phrases verbatim, not by semantic robustness.
+A single paraphrase pass wipes out both watermarks, reproducing the key
+weakness discussed in the article.
 
-Caveat observed in practice: with a fixed key and a 1-token hash context,
-Gumbel-Max generation is deterministic given the previous token, which
-noticeably increases phrase repetition (and lowers NLL below the vanilla
-baseline). Production schemes mitigate this with longer hash windows and
-key rotation.
+Two trade-offs observed while building this:
+
+- With a 1-token hash context (an earlier revision), generation is
+  deterministic given the previous token, which causes visible repetition
+  loops — especially in Japanese. Widening the window to 4 tokens fixes
+  the loops.
+- The wider window costs edit robustness: each substituted token corrupts
+  its own position plus the next 4 windows, so token substitution degrades
+  z much faster than with a 1-token context. This is the same
+  quality/robustness tension the literature resolves with schemes like
+  SemStamp (semantic-space watermarks).

@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 import torch
 
-from .common import green_mask, gumbel_rand
+from .common import green_mask, gumbel_rand, window
 
 
 @dataclass
@@ -63,19 +63,19 @@ def generate(
     sampler = torch.Generator().manual_seed(seed)
 
     generated: list[int] = []
-    prev_token = int(input_ids[0, -1])
     logits, past = _step_logits(model, input_ids, None)
 
     for _ in range(max_new_tokens):
         vocab = logits.shape[-1]
+        ctx = window(generated, len(generated))
         if scheme == "kgw":
-            mask = green_mask(key, prev_token, vocab, gamma).to(device)
+            mask = green_mask(key, ctx, vocab, gamma).to(device)
             logits = logits + mask * delta
             probs = torch.softmax(logits, dim=-1)
             next_token = int(torch.multinomial(probs.cpu(), 1, generator=sampler))
         elif scheme == "gumbel":
             probs = torch.softmax(logits, dim=-1).cpu().double()
-            r = gumbel_rand(key, prev_token, vocab)
+            r = gumbel_rand(key, ctx, vocab)
             # argmax r^(1/p) == argmax log(r)/p  (log r < 0, so higher p wins)
             next_token = int(torch.argmax(torch.log(r) / (probs + 1e-300)))
         elif scheme == "vanilla":
@@ -87,7 +87,6 @@ def generate(
         if next_token == tok.eos_token_id:
             break
         generated.append(next_token)
-        prev_token = next_token
         step_input = torch.tensor([[next_token]], device=device)
         logits, past = _step_logits(model, step_input, past)
 
@@ -104,11 +103,13 @@ class Detection:
 def detect_kgw(token_ids: list[int], key: int, vocab_size: int, gamma: float = 0.25) -> Detection:
     """One-sided z-test on the green-token fraction. z > 4 is a confident hit."""
     hits = 0
-    pairs = list(zip(token_ids, token_ids[1:]))
-    for prev, cur in pairs:
-        if cur < vocab_size and green_mask(key, prev, vocab_size, gamma)[cur]:
+    n = 0
+    for i, cur in enumerate(token_ids):
+        if cur >= vocab_size:
+            continue
+        n += 1
+        if green_mask(key, window(token_ids, i), vocab_size, gamma)[cur]:
             hits += 1
-    n = len(pairs)
     if n == 0:
         return Detection(z=0.0, stat=0.0, n_tokens=0)
     z = (hits - gamma * n) / math.sqrt(n * gamma * (1 - gamma))
@@ -121,13 +122,13 @@ def detect_gumbel(token_ids: list[int], key: int, vocab_size: int) -> Detection:
     z is the normal approximation of the Gamma(n, 1) null: (S - n) / sqrt(n).
     """
     score = 0.0
-    pairs = list(zip(token_ids, token_ids[1:]))
-    for prev, cur in pairs:
+    n = 0
+    for i, cur in enumerate(token_ids):
         if cur >= vocab_size:
             continue
-        r = float(gumbel_rand(key, prev, vocab_size)[cur])
+        n += 1
+        r = float(gumbel_rand(key, window(token_ids, i), vocab_size)[cur])
         score += -math.log(1.0 - r)
-    n = len(pairs)
     if n == 0:
         return Detection(z=0.0, stat=0.0, n_tokens=0)
     z = (score - n) / math.sqrt(n)

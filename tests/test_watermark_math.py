@@ -6,7 +6,7 @@ import math
 
 import torch
 
-from llm_watermark_lab.common import green_mask, gumbel_rand, step_seed
+from llm_watermark_lab.common import green_mask, gumbel_rand, step_seed, window
 from llm_watermark_lab.watermark import detect_gumbel, detect_kgw
 
 VOCAB = 1000
@@ -27,7 +27,7 @@ def gen_kgw(n: int, watermark: bool) -> list[int]:
     for i in range(n):
         logits = synthetic_logits(prev, i)
         if watermark:
-            logits = logits + green_mask(KEY, prev, VOCAB, GAMMA) * DELTA
+            logits = logits + green_mask(KEY, window(out, i), VOCAB, GAMMA) * DELTA
         probs = torch.softmax(logits, dim=-1)
         prev = int(torch.multinomial(probs, 1, generator=sampler))
         out.append(prev)
@@ -40,7 +40,7 @@ def gen_gumbel(n: int, watermark: bool) -> list[int]:
     for i in range(n):
         probs = torch.softmax(synthetic_logits(prev, i), dim=-1).double()
         if watermark:
-            r = gumbel_rand(KEY, prev, VOCAB)
+            r = gumbel_rand(KEY, window(out, i), VOCAB)
             prev = int(torch.argmax(torch.log(r) / (probs + 1e-300)))
         else:
             prev = int(torch.multinomial(probs, 1, generator=sampler))
@@ -49,13 +49,20 @@ def gen_gumbel(n: int, watermark: bool) -> list[int]:
 
 
 def test_seed_is_deterministic():
-    assert step_seed(KEY, 5) == step_seed(KEY, 5)
-    assert step_seed(KEY, 5) != step_seed(KEY, 6)
-    assert torch.equal(green_mask(KEY, 5, VOCAB, GAMMA), green_mask(KEY, 5, VOCAB, GAMMA))
+    ctx = (1, 2, 3, 4)
+    assert step_seed(KEY, ctx) == step_seed(KEY, ctx)
+    assert step_seed(KEY, ctx) != step_seed(KEY, (1, 2, 3, 5))
+    assert torch.equal(green_mask(KEY, ctx, VOCAB, GAMMA), green_mask(KEY, ctx, VOCAB, GAMMA))
+
+
+def test_window_pads_and_slides():
+    assert window([], 0) == (0, 0, 0, 0)
+    assert window([7, 8], 2) == (0, 0, 7, 8)
+    assert window([5, 6, 7, 8, 9], 5) == (6, 7, 8, 9)
 
 
 def test_green_mask_fraction():
-    frac = green_mask(KEY, 3, 100_000, GAMMA).float().mean().item()
+    frac = green_mask(KEY, (1, 2, 3, 4), 100_000, GAMMA).float().mean().item()
     assert abs(frac - GAMMA) < 0.01
 
 
@@ -86,7 +93,7 @@ def test_gumbel_is_distortion_free_marginally():
     counts = torch.zeros(4)
     n = 20_000
     for k in range(n):
-        r = gumbel_rand(k, 0, 4)
+        r = gumbel_rand(k, (0, 0, 0, 0), 4)
         counts[int(torch.argmax(torch.log(r) / probs))] += 1
     freq = counts / n
     for i in range(4):
