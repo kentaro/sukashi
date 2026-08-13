@@ -96,13 +96,14 @@ def _sample_sentence(model, tok, context_ids, seed: int, max_tokens: int = 80) -
         pad_token_id=tok.eos_token_id,
     )
     new_ids = out[0, context_ids.shape[1]:]
-    # Truncate at the first sentence terminator (decode incrementally).
+    # Truncate at the first sentence terminator that follows actual content,
+    # so leading newlines or paragraph breaks do not yield empty candidates.
     for j in range(1, len(new_ids) + 1):
-        piece = tok.decode(new_ids[:j])
-        if piece and piece[-1] in _TERMINATORS:
+        piece = tok.decode(new_ids[:j], skip_special_tokens=True)
+        if piece.strip() and piece[-1] in _TERMINATORS:
             new_ids = new_ids[:j]
             break
-    return tok.decode(new_ids), new_ids.unsqueeze(0)
+    return tok.decode(new_ids, skip_special_tokens=True), new_ids.unsqueeze(0)
 
 
 @torch.no_grad()
@@ -154,7 +155,7 @@ def generate_semstamp(
         sentences.append(accepted[0].strip())
         tries_log.append(attempt + 1)
         context = torch.cat([context, accepted[1].to(device)], dim=1)
-        if int(accepted[1][0, -1]) == tok.eos_token_id:
+        if tok.eos_token_id in accepted[1][0].tolist():
             break
 
     return SemStampResult(text="".join(sentences), sentences=sentences, tries=tries_log)
