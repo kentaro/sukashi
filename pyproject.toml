@@ -8,6 +8,7 @@ dependencies = [
     "torch>=2.4",
     "transformers>=4.44",
     "accelerate>=0.33",
+    "sentence-transformers>=5.6.1",
 ]
 
 [build-system]
