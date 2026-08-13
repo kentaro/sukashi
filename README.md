@@ -1,4 +1,4 @@
-# llm-watermark-lab
+# sukashi
 
 From-scratch implementation of LLM text watermarking, built to understand how
 schemes like the one Anthropic announced for Claude (and Google's SynthID-Text)
@@ -31,7 +31,7 @@ uv sync
 uv run pytest
 
 # Full experiment (downloads Qwen2.5-0.5B-Instruct on first run)
-uv run python -m llm_watermark_lab.experiment
+uv run python -m sukashi.experiment
 ```
 
 Results are written to `results/results.json`.

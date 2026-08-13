@@ -6,8 +6,8 @@ import math
 
 import torch
 
-from llm_watermark_lab.common import green_mask, gumbel_rand, step_seed, window
-from llm_watermark_lab.watermark import detect_gumbel, detect_kgw
+from sukashi.common import green_mask, gumbel_rand, step_seed, window
+from sukashi.watermark import detect_gumbel, detect_kgw
 
 VOCAB = 1000
 KEY = 12345

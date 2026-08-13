@@ -1,6 +1,6 @@
 """End-to-end experiment: generate, detect, attack, and measure quality.
 
-Run with: uv run python -m llm_watermark_lab.experiment
+Run with: uv run python -m sukashi.experiment
 Writes results/results.json and prints a summary table.
 """
 
