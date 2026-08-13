@@ -1,7 +1,7 @@
 [project]
 name = "sukashi"
 version = "0.1.0"
-description = "From-scratch implementation of LLM text watermarking (KGW and Gumbel-Max) with detection and paraphrase-attack experiments"
+description = "Semantic (embedding-space) watermarking for LLM-generated text, SemStamp-style"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

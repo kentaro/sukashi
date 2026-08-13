@@ -20,7 +20,23 @@ from dataclasses import dataclass
 
 import torch
 
-from .watermark import Detection, _prompt_ids
+
+@dataclass
+class Detection:
+    z: float
+    stat: float
+    n_tokens: int
+
+
+def _prompt_ids(tok, prompt: str, device) -> torch.Tensor:
+    ids = tok.apply_chat_template(
+        [{"role": "user", "content": prompt}],
+        add_generation_prompt=True,
+        return_tensors="pt",
+    )
+    if not isinstance(ids, torch.Tensor):
+        ids = ids["input_ids"]
+    return ids.to(device)
 
 _TERMINATORS = "。！？.!?\n"
 _SPLIT_RE = re.compile(f"[^{re.escape(_TERMINATORS)}]+[{re.escape(_TERMINATORS)}]*")
