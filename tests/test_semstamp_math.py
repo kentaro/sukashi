@@ -18,23 +18,25 @@ def test_lsh_is_deterministic():
     lsh2 = LshWatermark(KEY, DIM)
     e = fake_embed("hello world.")
     assert lsh1.signature(e) == lsh2.signature(e)
-    assert lsh1.valid == lsh2.valid
-    assert LshWatermark(KEY + 1, DIM).valid != lsh1.valid or True  # keys differ, sets may rarely match
+    assert lsh1.valid_set(3) == lsh2.valid_set(3)
+    assert lsh1.valid_set(3) != lsh1.valid_set(4) or lsh1.valid_set(3) != lsh1.valid_set(5)
 
 
 def test_valid_fraction_matches_gamma():
     lsh = LshWatermark(KEY, DIM, n_planes=4, gamma=0.25)
-    hits = sum(lsh.is_valid(fake_embed(f"sentence number {i}.")) for i in range(2000))
+    hits = sum(lsh.is_valid(fake_embed(f"sentence number {i}."), prev_sig=i % 16)
+               for i in range(2000))
     assert abs(hits / 2000 - lsh.gamma_eff) < 0.05
 
 
 def test_detection_separates_watermarked_text():
     lsh = LshWatermark(KEY, DIM)
-    accepted, i = [], 0
+    accepted, i, prev_sig = [], 0, 0
     while len(accepted) < 20:
         s = f"candidate sentence {i}."
-        if lsh.is_valid(fake_embed(s)):
+        if lsh.is_valid(fake_embed(s), prev_sig):
             accepted.append(s)
+            prev_sig = lsh.signature(fake_embed(s))
         i += 1
     watermarked = " ".join(accepted)
     plain = " ".join(f"ordinary sentence {i}." for i in range(20))

@@ -47,19 +47,23 @@ def split_sentences(text: str) -> list[str]:
 
 
 class LshWatermark:
-    """Key-derived LSH partition of embedding space with a valid-region set."""
+    """Key-derived LSH partition of embedding space with chained valid regions.
+
+    As in the SemStamp paper, the set of valid regions for each sentence is
+    derived from the LSH signature of the PREVIOUS sentence (seeded with the
+    secret key), so the watermark is a chain rather than a fixed global set.
+    """
 
     def __init__(self, key: int, dim: int, n_planes: int = 4, gamma: float = 0.25):
+        self.key = key
         self.n_planes = n_planes
         self.gamma = gamma
         g = torch.Generator().manual_seed(key % (2**31 - 1))
         planes = torch.randn(n_planes, dim, generator=g, dtype=torch.float64)
         self.planes = planes / planes.norm(dim=1, keepdim=True)
-        n_regions = 2**n_planes
-        n_valid = max(1, round(gamma * n_regions))
-        perm = torch.randperm(n_regions, generator=g)
-        self.valid = set(perm[:n_valid].tolist())
-        self.gamma_eff = n_valid / n_regions
+        self.n_regions = 2**n_planes
+        self.n_valid = max(1, round(gamma * self.n_regions))
+        self.gamma_eff = self.n_valid / self.n_regions
 
     def _projections(self, emb: torch.Tensor) -> torch.Tensor:
         e = emb.to(torch.float64)
@@ -70,11 +74,17 @@ class LshWatermark:
         bits = (self._projections(emb) > 0).tolist()
         return sum(1 << i for i, b in enumerate(bits) if b)
 
-    def is_valid(self, emb: torch.Tensor, margin: float = 0.0) -> bool:
+    def valid_set(self, prev_sig: int) -> set[int]:
+        seed = (self.key * 1_000_003 + prev_sig * 2_654_435_761) % (2**31 - 1)
+        g = torch.Generator().manual_seed(seed)
+        perm = torch.randperm(self.n_regions, generator=g)
+        return set(perm[: self.n_valid].tolist())
+
+    def is_valid(self, emb: torch.Tensor, prev_sig: int, margin: float = 0.0) -> bool:
         proj = self._projections(emb)
         if float(proj.abs().min()) < margin:
             return False
-        return self.signature(emb) in self.valid
+        return self.signature(emb) in self.valid_set(prev_sig)
 
 
 @dataclass
@@ -127,6 +137,7 @@ def generate_semstamp(
     device = next(model.parameters()).device
     context = _prompt_ids(tok, prompt, device)
     lsh: LshWatermark | None = None
+    prev_sig = 0
     sentences: list[str] = []
     tries_log: list[int] = []
 
@@ -143,7 +154,7 @@ def generate_semstamp(
             emb = embed_fn(text.strip())
             if lsh is None:
                 lsh = LshWatermark(key, emb.shape[-1], n_planes, gamma)
-            if lsh.is_valid(emb, margin):
+            if lsh.is_valid(emb, prev_sig, margin):
                 accepted = (text, ids)
                 break
         else:
@@ -154,6 +165,8 @@ def generate_semstamp(
             break
         sentences.append(accepted[0].strip())
         tries_log.append(attempt + 1)
+        if watermark and lsh is not None:
+            prev_sig = lsh.signature(embed_fn(accepted[0].strip()))
         context = torch.cat([context, accepted[1].to(device)], dim=1)
         if tok.eos_token_id in accepted[1][0].tolist():
             break
@@ -174,7 +187,13 @@ def detect_semstamp(
     sentences = split_sentences(text)
     if not sentences:
         return Detection(z=0.0, stat=0.0, n_tokens=0)
-    hits = sum(1 for s in sentences if lsh.is_valid(embed_fn(s)))
+    hits = 0
+    prev_sig = 0
+    for s in sentences:
+        emb = embed_fn(s)
+        if lsh.signature(emb) in lsh.valid_set(prev_sig):
+            hits += 1
+        prev_sig = lsh.signature(emb)
     n = len(sentences)
     g = lsh.gamma_eff
     z = (hits - g * n) / math.sqrt(n * g * (1 - g))
