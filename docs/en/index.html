@@ -71,7 +71,7 @@
     </div>
   </div></div>
 
-  <p>I then asked the same model to rewrite the watermarked essay “keeping the meaning, changing the wording as much as possible”. The token sequence changed substantially, and yet —</p>
+  <p>I then had an <strong>unwatermarked model</strong> (the same LLM with watermarking switched off) rewrite the watermarked essay “keeping the meaning, changing the wording as much as possible” — simulating an attacker laundering the text through a clean LLM, which adds no watermark of its own. The token sequence changed substantially, and yet —</p>
 
   <div class="sample">
     <div class="head"><span class="t">↑ after paraphrasing</span><span class="z hit">z = 4.43 / still detected</span></div>
@@ -91,7 +91,7 @@
       <p>また、雨の日は人が少なく、ゆっくりと歩くことができます。人混みを避けて自分のペースで探求する時間を過ごすことができるのです。これが普段の日常とは少し異なる、特別な体験をもたらします。</p>
       <p>最後に、雨の中の散歩は自己発見の場ともなり得ます。静かに自分を省みる時間を持つことで、普段見逃しがちな感情や思考を整理することができます。雨に濡れることによる肌感覚も、新たなインスピレーションを引き出すきっかけとなります。</p>
     </div>
-    <div class="note">Paraphrasing the same essay yields <span class="z dead">z = 0.71 / destroyed</span> — the watermark's substance is a bias in surface token choices, so a wholesale token replacement erases it</div>
+    <div class="note">Paraphrasing the same essay with the unwatermarked model yields <span class="z dead">z = 0.71 / destroyed</span> — the watermark's substance is a bias in surface token choices, so a wholesale token replacement erases it</div>
   </div>
 
   <h3>Example 3 — Where does the watermark live? Coloring every token</h3>
@@ -126,7 +126,7 @@
     <tr><td>substitution 10%</td><td class="mono">2.45</td><td class="mono">19.61</td></tr>
     <tr><td>substitution 30%</td><td class="mono">-0.82</td><td class="mono">7.27</td></tr>
     <tr><td>substitution 50%</td><td class="mono">1.31</td><td class="mono">0.40</td></tr>
-    <tr><td>paraphrase (LLM)</td><td class="mono"><span class="lo">-1.45</span></td><td class="mono"><span class="lo">-0.66</span></td></tr>
+    <tr><td>paraphrase (unwatermarked LLM)</td><td class="mono"><span class="lo">-1.45</span></td><td class="mono"><span class="lo">-0.66</span></td></tr>
   </table></div>
   <p>On quality: KGW worsened mean NLL under the same model from 2.25 to 3.02 nats/token (a distorted distribution), while Gumbel-Max stayed at 2.77 — no degradation, exactly as the distortion-free construction promises.</p>
 </section>
