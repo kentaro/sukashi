@@ -54,10 +54,12 @@ class LshWatermark:
     secret key), so the watermark is a chain rather than a fixed global set.
     """
 
-    def __init__(self, key: int, dim: int, n_planes: int = 4, gamma: float = 0.25):
+    def __init__(self, key: int, dim: int, n_planes: int = 4, gamma: float = 0.25,
+                 center: torch.Tensor | None = None):
         self.key = key
         self.n_planes = n_planes
         self.gamma = gamma
+        self.center = None if center is None else center.to(torch.float64)
         g = torch.Generator().manual_seed(key % (2**31 - 1))
         planes = torch.randn(n_planes, dim, generator=g, dtype=torch.float64)
         self.planes = planes / planes.norm(dim=1, keepdim=True)
@@ -67,6 +69,8 @@ class LshWatermark:
 
     def _projections(self, emb: torch.Tensor) -> torch.Tensor:
         e = emb.to(torch.float64)
+        if self.center is not None:
+            e = e - self.center
         e = e / e.norm()
         return self.planes @ e
 
@@ -129,6 +133,7 @@ def generate_semstamp(
     max_sentences: int = 12,
     max_tries: int = 16,
     watermark: bool = True,
+    center: torch.Tensor | None = None,
 ) -> SemStampResult:
     """Sentence-level rejection sampling against a key-derived LSH partition.
 
@@ -153,7 +158,7 @@ def generate_semstamp(
                 break
             emb = embed_fn(text.strip())
             if lsh is None:
-                lsh = LshWatermark(key, emb.shape[-1], n_planes, gamma)
+                lsh = LshWatermark(key, emb.shape[-1], n_planes, gamma, center)
             if lsh.is_valid(emb, prev_sig, margin):
                 accepted = (text, ids)
                 break
@@ -181,9 +186,10 @@ def detect_semstamp(
     dim: int,
     n_planes: int = 4,
     gamma: float = 0.25,
+    center: torch.Tensor | None = None,
 ) -> Detection:
     """z-test on the fraction of sentences whose embedding lands in a valid region."""
-    lsh = LshWatermark(key, dim, n_planes, gamma)
+    lsh = LshWatermark(key, dim, n_planes, gamma, center)
     sentences = split_sentences(text)
     if not sentences:
         return Detection(z=0.0, stat=0.0, n_tokens=0)
